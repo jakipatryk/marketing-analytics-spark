@@ -2,3 +2,5 @@
 /project/target
 /.idea/
 /.bsp/
+/resources/mobile_app_clickstream
+/resources/user_purchases
