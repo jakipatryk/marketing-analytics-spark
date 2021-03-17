@@ -18,6 +18,8 @@ trait FakeDataLoader {
         :: ("u2", "9", "app_close", "2020-08-25 08:15:00", None)
         :: ("u3", "10", "app_open", "2020-08-26 08:15:00", Some(Map("campaign_id" -> "c1", "channel_id" -> "ch2")))
         :: ("u3", "11", "app_close", "2020-08-26 08:16:00", None)
+        :: ("u3", "12", "app_open", "2020-08-28 08:15:00", Some(Map("campaign_id" -> "c1", "channel_id" -> "ch2")))
+        :: ("u3", "13", "app_close", "2020-08-28 08:16:00", None)
         :: Nil
       ).toDF("userId", "eventId", "eventType", "eventTime", "attributes")
       .withColumn("eventTime", $"eventTime".cast(TimestampType))

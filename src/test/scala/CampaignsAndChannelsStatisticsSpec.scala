@@ -1,4 +1,4 @@
-import com.utils.{CampaignsAndChannelsStatistics, PurchasesAttributionProjection}
+import com.utils.{CampaignsAndChannelsStatistics, EventsToEventsWithSession, PurchasesAttributionProjection}
 import org.apache.spark.sql.{Row, SparkSession}
 import org.scalatest.flatspec.AnyFlatSpec
 
@@ -30,6 +30,27 @@ class CampaignsAndChannelsStatisticsSpec extends AnyFlatSpec with FakeDataLoader
       .collect()
 
     assert(top2CampaignsSQL.sameElements(top2CampaignsWithoutSQL))
+  }
+
+  "mostPopularChannelsInCampaigns" should "return map each campaign to its most popular channel" in {
+    val (events, _) = loadFakeData()
+    val eventsWithSession = EventsToEventsWithSession.convert(events)
+    val result = CampaignsAndChannelsStatistics.mostPopularChannelsInCampaigns(eventsWithSession).collect()
+
+    assert(result.length == 2)
+    assert(result contains Row("c1", "ch2"))
+    assert(result contains Row("c2", "ch1"))
+  }
+
+  "mostPopularChannelsInCampaignsWithoutSQL" should "return equivalent result to version with SQL" in {
+    val (events, _) = loadFakeData()
+    val eventsWithSession = EventsToEventsWithSession.convert(events)
+    val resultSQL = CampaignsAndChannelsStatistics.mostPopularChannelsInCampaigns(eventsWithSession).collect()
+    val resultWithoutSQL = CampaignsAndChannelsStatistics
+      .mostPopularChannelsInCampaignsWithoutSQL(eventsWithSession)
+      .collect()
+
+    assert(resultSQL.toSet == resultWithoutSQL.toSet)
   }
 
 }
