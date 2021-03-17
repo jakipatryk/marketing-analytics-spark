@@ -21,4 +21,13 @@ class PurchasesAttributionProjectionSpec extends AnyFlatSpec with FakeDataLoader
     assert(result.length == 4)
   }
 
+  "viaAggregator" should "return result equivalent to viaPlainSparkSQL" in {
+    val (events, purchases) = loadFakeData()
+    val dfPlainSparkSQL = PurchasesAttributionProjection.viaPlainSparkSQL(events, purchases)
+    val resultPlainSparkSQL = dfPlainSparkSQL.collect()
+    val dfAggregator = PurchasesAttributionProjection.viaAggregator(events, purchases)
+    val resultAggregator = dfAggregator.collect()
+    assert(resultAggregator.toSet == resultPlainSparkSQL.toSet)
+  }
+
 }
