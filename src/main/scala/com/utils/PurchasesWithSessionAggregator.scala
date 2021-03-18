@@ -1,6 +1,5 @@
 package com.utils
 
-import com.utils
 import com.utils.models.{Event, PurchaseWithSessionId}
 import org.apache.spark.sql.expressions.Aggregator
 import org.apache.spark.sql.{Encoder, Encoders}
@@ -13,7 +12,7 @@ case class SessionBuffer(appOpenEvents: SortedSet[Event], purchaseEvents: Sorted
 object PurchasesWithSessionAggregator
   extends Aggregator[Event, SessionBuffer, List[PurchaseWithSessionId]] with Serializable {
 
-  override def zero: SessionBuffer = utils.SessionBuffer(SortedSet.empty, SortedSet.empty)
+  override def zero: SessionBuffer = SessionBuffer(SortedSet.empty, SortedSet.empty)
 
   override def reduce(b: SessionBuffer, a: Event): SessionBuffer = a.eventType match {
     case "app_open" => SessionBuffer(b.appOpenEvents + a, b.purchaseEvents)
