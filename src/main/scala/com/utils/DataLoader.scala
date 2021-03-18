@@ -6,7 +6,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 trait DataLoader {
 
-  def loadCsv(eventsPath: String, productsPath: String)(implicit spark: SparkSession): (DataFrame, DataFrame) = {
+  def loadCsv(eventsPath: String, purchasesPath: String)(implicit spark: SparkSession): (DataFrame, DataFrame) = {
     import spark.implicits._
 
     val events = spark
@@ -29,13 +29,11 @@ trait DataLoader {
       .read
       .option("header", "true")
       .schema(purchasesSchema)
-      .csv(productsPath)
+      .csv(purchasesPath)
 
     (events, purchases)
   }
 
-  def loadParquet(eventsPath: String, productsPath: String)(implicit spark: SparkSession): (DataFrame, DataFrame) = {
-    ???
-  }
+  def loadParquet(eventsPath: String, purchasesPath: String)(implicit spark: SparkSession): (DataFrame, DataFrame) = ???
 
 }
