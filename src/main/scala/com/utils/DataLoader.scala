@@ -6,7 +6,35 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 trait DataLoader {
 
-  def loadCsv(eventsPath: String, purchasesPath: String)(implicit spark: SparkSession): (DataFrame, DataFrame) = {
+  def inputFromCsv(implicit spark: SparkSession): (DataFrame, DataFrame) = {
+    loadCsv(
+      "src/main/resources/mobile_app_clickstream",
+      "src/main/resources/user_purchases"
+    )
+  }
+
+  def inputFromParquetNoPartitioning(implicit spark: SparkSession): (DataFrame, DataFrame) = {
+    loadParquet(
+      "src/main/resources/mobile_app_clickstream_parquet_np",
+      "src/main/resources/user_purchases_parquet_np"
+    )
+  }
+
+  def inputFromParquetPartitionedByEventTimeAndIsConfirmed(implicit spark: SparkSession): (DataFrame, DataFrame) = {
+    loadParquet(
+      "src/main/resources/mobile_app_clickstream_parquet",
+      "src/main/resources/user_purchases_parquet"
+    )
+  }
+
+  def inputFromParquetPartitionedByDate(implicit spark: SparkSession): (DataFrame, DataFrame) = {
+    loadParquet(
+      "src/main/resources/mobile_app_clickstream_parquet_time",
+      "src/main/resources/user_purchases_parquet_time"
+    )
+  }
+
+  private def loadCsv(eventsPath: String, purchasesPath: String)(implicit spark: SparkSession): (DataFrame, DataFrame) = {
     import spark.implicits._
 
     val events = spark
@@ -20,10 +48,10 @@ trait DataLoader {
 
     val purchasesSchema = StructType(
       StructField("purchaseId", StringType)
-      :: StructField("purchaseTime", TimestampType)
-      :: StructField("billingCost", DoubleType)
-      :: StructField("isConfirmed", BooleanType)
-      :: Nil
+        :: StructField("purchaseTime", TimestampType)
+        :: StructField("billingCost", DoubleType)
+        :: StructField("isConfirmed", BooleanType)
+        :: Nil
     )
     val purchases = spark
       .read
@@ -34,6 +62,10 @@ trait DataLoader {
     (events, purchases)
   }
 
-  def loadParquet(eventsPath: String, purchasesPath: String)(implicit spark: SparkSession): (DataFrame, DataFrame) = ???
+  private def loadParquet(eventsPath: String, purchasesPath: String)(implicit spark: SparkSession): (DataFrame, DataFrame) = {
+    val events = spark.read.parquet(eventsPath)
+    val purchases = spark.read.parquet(purchasesPath)
+    (events, purchases)
+  }
 
 }
