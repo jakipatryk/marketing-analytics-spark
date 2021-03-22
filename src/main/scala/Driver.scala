@@ -1,4 +1,4 @@
-import com.utils.{CampaignsAndChannelsStatistics, Config, DataLoader, PurchasesAttributionProjection}
+import com.utils.{CampaignsAndChannelsStatistics, Config, DataLoader, PurchasesAttributionProjection, WeeklyPurchasesProjection}
 import org.apache.spark.sql.{Column, SparkSession}
 import org.apache.spark.sql.functions.{lit, to_date}
 
@@ -36,6 +36,7 @@ object Driver extends App with DataLoader {
       val date = "2020-11-11"
       `task #3.2`(eventsExactDateCondition(date), purchasesExactDateCondition(date), date)
     }
+    case "task_3_3" => `task #3.3`
   }, measureTime)
 
   spark.stop()
@@ -52,12 +53,6 @@ object Driver extends App with DataLoader {
       .write
       .mode("overwrite")
       .parquet(s"${config.outputBasePath}/1_1")
-//    purchasesAttribution
-//      .withColumn("purchaseTimeDate", to_date($"purchaseTime", "yyyy-mm-dd"))
-//      .write
-//      .mode("override")
-//      .partitionBy("purchaseTimeDate")
-//      .parquet(s"${config.outputBasePath}1_1")
   }
 
   def `task #1.2`(): Unit = {
@@ -103,6 +98,12 @@ object Driver extends App with DataLoader {
       .write
       .mode("overwrite")
       .parquet(s"${config.outputBasePath}$pathName/most_popular_channels")
+  }
+
+  def `task #3.3`(): Unit = {
+    val (_, purchases) = loadInput
+    val weeklyPurchases = WeeklyPurchasesProjection.create(purchases)
+    weeklyPurchases.write.mode("overwrite").parquet(s"${config.outputBasePath}3_3")
   }
 
   private def eventsBetweenDatesCondition(start: String, end: String): Column =
