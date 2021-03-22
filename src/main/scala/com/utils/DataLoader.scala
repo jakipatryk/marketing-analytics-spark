@@ -1,46 +1,25 @@
 package com.utils
 
+import com.utils.InputType._
+
 import org.apache.spark.sql.functions.{from_json, regexp_extract, regexp_replace}
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 trait DataLoader {
 
-  def inputFromCsv(implicit spark: SparkSession): (DataFrame, DataFrame) = {
-    loadCsv(
-      "src/main/resources/mobile_app_clickstream",
-      "src/main/resources/user_purchases"
-    )
+  def loadInput(implicit spark: SparkSession, config: Config): (DataFrame, DataFrame) = config.inputType match {
+    case Csv => loadCsv
+    case Parquet => loadParquet
   }
 
-  def inputFromParquetNoPartitioning(implicit spark: SparkSession): (DataFrame, DataFrame) = {
-    loadParquet(
-      "src/main/resources/mobile_app_clickstream_parquet_np",
-      "src/main/resources/user_purchases_parquet_np"
-    )
-  }
-
-  def inputFromParquetPartitionedByEventTimeAndIsConfirmed(implicit spark: SparkSession): (DataFrame, DataFrame) = {
-    loadParquet(
-      "src/main/resources/mobile_app_clickstream_parquet",
-      "src/main/resources/user_purchases_parquet"
-    )
-  }
-
-  def inputFromParquetPartitionedByDate(implicit spark: SparkSession): (DataFrame, DataFrame) = {
-    loadParquet(
-      "src/main/resources/mobile_app_clickstream_parquet_time",
-      "src/main/resources/user_purchases_parquet_time"
-    )
-  }
-
-  private def loadCsv(eventsPath: String, purchasesPath: String)(implicit spark: SparkSession): (DataFrame, DataFrame) = {
+  private def loadCsv(implicit spark: SparkSession, config: Config): (DataFrame, DataFrame) = {
     import spark.implicits._
 
     val events = spark
       .read
       .option("header", "true")
-      .csv(eventsPath)
+      .csv(config.eventsInputPath)
       .withColumn("eventTime", $"eventTime".cast(TimestampType))
       .withColumn("attributes", regexp_extract($"attributes", "\"?(\\{.+\\})\"?", 1))
       .withColumn("attributes", regexp_replace($"attributes", "\"\"", "'"))
@@ -57,14 +36,14 @@ trait DataLoader {
       .read
       .option("header", "true")
       .schema(purchasesSchema)
-      .csv(purchasesPath)
+      .csv(config.purchasesInputPath)
 
     (events, purchases)
   }
 
-  private def loadParquet(eventsPath: String, purchasesPath: String)(implicit spark: SparkSession): (DataFrame, DataFrame) = {
-    val events = spark.read.parquet(eventsPath)
-    val purchases = spark.read.parquet(purchasesPath)
+  private def loadParquet(implicit spark: SparkSession, config: Config): (DataFrame, DataFrame) = {
+    val events = spark.read.parquet(config.eventsInputPath)
+    val purchases = spark.read.parquet(config.purchasesInputPath)
     (events, purchases)
   }
 

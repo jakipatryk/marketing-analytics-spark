@@ -1,18 +1,42 @@
-import com.utils.{CampaignsAndChannelsStatistics, DataHandler, EventsToEventsWithSession, PurchasesAttributionProjection}
-import org.apache.spark.sql.SparkSession
+import com.utils.{CampaignsAndChannelsStatistics, Config, DataLoader, PurchasesAttributionProjection}
+import org.apache.spark.sql.{Column, SparkSession}
 import org.apache.spark.sql.functions.{lit, to_date}
 
-object Driver extends App with DataHandler {
+object Driver extends App with DataLoader {
 
   implicit val spark: SparkSession = SparkSession
     .builder()
     .master("local[*]")
+//    .config("spark.sql.adaptive.enabled", "true")
     .appName("GridUMarketingAnalytics")
     .getOrCreate()
 
   import spark.implicits._
 
-  doTask(`task #1.1`)
+  val mode: String = args.head
+  implicit val config: Config = Config.parseFromCommandLine(args.tail)
+  val measureTime = true
+
+  doTask(mode match {
+    case "prepare_parquet_inputs" => prepareParquetInputs
+    case "task_1_1" => `task #1.1`
+    case "task_1_2" => `task #1.2`
+    case "task_2_1" => `task #2.1`
+    case "task_2_2" => `task #2.2`
+    case "task_3_2_september" => {
+      val startDate = "2020-10-01"
+      val endDate = "2020-10-31"
+      `task #3.2`(
+        eventsBetweenDatesCondition(startDate, endDate),
+        purchasesBetweenDatesCondition(startDate, endDate),
+        "september"
+      )
+    }
+    case "task_3_2_2020_11_11" => {
+      val date = "2020-11-11"
+      `task #3.2`(eventsExactDateCondition(date), purchasesExactDateCondition(date), date)
+    }
+  }, measureTime)
 
   spark.stop()
 
@@ -22,74 +46,97 @@ object Driver extends App with DataHandler {
   }
 
   def `task #1.1`(): Unit = {
-    val (events, purchases) = inputFromCsv
+    val (events, purchases) = loadInput
     val purchasesAttribution = PurchasesAttributionProjection.viaPlainSparkSQL(events, purchases)
-//    purchasesAttribution.write.parquet("src/main/resources/out/1_1/")
     purchasesAttribution
-      .withColumn("purchaseTimeDate", to_date($"purchaseTime", "yyyy-mm-dd"))
       .write
-      .partitionBy("purchaseTimeDate")
-      .parquet("src/main/resources/out/1_1")
+      .mode("overwrite")
+      .parquet(s"${config.outputBasePath}/1_1")
+//    purchasesAttribution
+//      .withColumn("purchaseTimeDate", to_date($"purchaseTime", "yyyy-mm-dd"))
+//      .write
+//      .mode("override")
+//      .partitionBy("purchaseTimeDate")
+//      .parquet(s"${config.outputBasePath}1_1")
   }
 
   def `task #1.2`(): Unit = {
-    val (events, purchases) = inputFromCsv
+    val (events, purchases) = loadInput
     val purchasesAttribution = PurchasesAttributionProjection.viaAggregator(events, purchases)
-    purchasesAttribution.write.parquet("src/main/resources/out/1_2/")
+    purchasesAttribution.write.mode("overwrite").parquet(s"${config.outputBasePath}1_2/")
   }
 
   def `task #2.1`(): Unit = {
-    val purchasesAttribution = spark.read.parquet("src/main/resources/out/1_1")
+    val (events, purchases) = loadInput
+    val purchasesAttribution = PurchasesAttributionProjection.viaAggregator(events, purchases)
     val topRevenue = CampaignsAndChannelsStatistics.topCampaignsByRevenue(purchasesAttribution)
-    topRevenue.write.parquet("src/main/resources/out/2_1")
+    topRevenue.write.mode("overwrite").parquet(s"${config.outputBasePath}2_1")
   }
 
   def `task #2.2`(): Unit = {
-    val (events, _) = inputFromCsv
-    val evensWithSession = EventsToEventsWithSession.convert(events)
-    val topChannelsPerCampaign = CampaignsAndChannelsStatistics.mostPopularChannelsInCampaigns(evensWithSession)
-    topChannelsPerCampaign.write.parquet("src/main/resources/out/2_2")
+    val (events, _) = loadInput
+    val topChannelsPerCampaign = CampaignsAndChannelsStatistics.mostPopularChannelsInCampaigns(events)
+    topChannelsPerCampaign.write.mode("overwrite").parquet(s"${config.outputBasePath}2_2")
   }
 
-  def `task #3.2`(): Unit = {
-    val (events, purchases) = inputFromParquetPartitionedByDate
+  def `task #3.2`(eventsDateCondition: Column, purchasesDateCondition: Column, pathName: String)(): Unit = {
+    val (events, purchases) = loadInput
 
-    val inSeptemberEvents = events
-      .where(
-        $"eventTimeDate".geq(lit("2020-10-01"))
-          && $"eventTimeDate".leq(lit("2020-10-31"))
-      )
-    val inSeptemberPurchases = purchases
-      .where(
-        $"purchaseTimeDate".geq(lit("2020-10-01"))
-          && $"purchaseTimeDate".leq(lit("2020-10-31"))
-      )
-    val inSeptemberPurchasesAttribution = PurchasesAttributionProjection
-      .viaPlainSparkSQL(inSeptemberEvents, inSeptemberPurchases)
-    val topCampaignsInSeptember = CampaignsAndChannelsStatistics.topCampaignsByRevenue(inSeptemberPurchasesAttribution)
-    topCampaignsInSeptember
-      .write
-      .parquet("src/main/resources/out/3_2/september/top_campaigns")
-    val topChannelsInCampaignsInSeptember = CampaignsAndChannelsStatistics
-        .mostPopularChannelsInCampaigns(EventsToEventsWithSession.convert(inSeptemberEvents))
-    topChannelsInCampaignsInSeptember
-      .write
-      .parquet("src/main/resources/out/3_2/september/most_popular_channels")
+    val filteredEvents = events.where(eventsDateCondition)
+    val filteredPurchases = purchases.where(purchasesDateCondition)
 
-    val atSpecificDayEvents = events.where($"eventTimeDate" === lit("2020-11-11"))
-    val atSpecificDayPurchases = purchases.where($"purchaseTimeDate" === lit("2020-11-11"))
-    val atSpecificDayPurchaseAttributes = PurchasesAttributionProjection
-      .viaPlainSparkSQL(atSpecificDayEvents, atSpecificDayPurchases)
-    val topCampaignsAtSpecificDay = CampaignsAndChannelsStatistics
-      .topCampaignsByRevenue(atSpecificDayPurchaseAttributes)
-    topCampaignsAtSpecificDay
+    val purchasesAttribution = PurchasesAttributionProjection
+      .viaPlainSparkSQL(filteredEvents, filteredPurchases)
+    val topCampaigns = CampaignsAndChannelsStatistics.topCampaignsByRevenue(purchasesAttribution)
+    topCampaigns
       .write
-      .parquet("src/main/resources/out/3_2/2020-11-11/top_campaigns")
-    val topChannelsInCampaignsAtSpecificDay = CampaignsAndChannelsStatistics
-      .mostPopularChannelsInCampaigns(EventsToEventsWithSession.convert(atSpecificDayEvents))
-    topChannelsInCampaignsAtSpecificDay
+      .mode("overwrite")
+      .parquet(s"${config.outputBasePath}$pathName/top_campaigns")
+
+    val topChannelsInCampaigns = CampaignsAndChannelsStatistics.mostPopularChannelsInCampaigns(filteredEvents)
+    topChannelsInCampaigns
       .write
-      .parquet("src/main/resources/out/3_2/2020-11-11/most_popular_channels")
+      .mode("overwrite")
+      .parquet(s"${config.outputBasePath}$pathName/most_popular_channels")
+  }
+
+  private def eventsBetweenDatesCondition(start: String, end: String): Column =
+    $"eventTimeDate".geq(lit(start)) && $"eventTimeDate".leq(lit(end))
+
+  private def eventsExactDateCondition(date: String): Column =
+    $"eventTimeDate" === lit(date)
+
+  private def purchasesBetweenDatesCondition(start: String, end: String): Column =
+    $"purchaseTimeDate".geq(lit(start)) && $"purchaseTimeDate".leq(lit(end))
+
+  private def purchasesExactDateCondition(date: String): Column =
+    $"purchaseTimeDate" === lit(date)
+
+  private def prepareParquetInputs(): Unit = {
+    val (events, purchases) = loadInput
+
+    events.write.parquet(config.outputBasePath + "no_partitioning/events/")
+    purchases.write.parquet(config.outputBasePath + "no_partitioning/purchases")
+
+    events
+      .write
+      .partitionBy("eventType")
+      .parquet(config.outputBasePath + "partition_by_eventType-isConfirmed/events/")
+    purchases
+      .write
+      .partitionBy("isConfirmed")
+      .parquet(config.outputBasePath + "partition_by_eventType-isConfirmed/purchases/")
+
+    events
+      .withColumn("eventTimeDate", to_date($"eventTime", "yyyy-mm-dd"))
+      .write
+      .partitionBy("eventTimeDate")
+      .parquet(config.outputBasePath + "partition_by_date/events/")
+    purchases
+      .withColumn("purchaseTimeDate", to_date($"purchaseTime", "yyyy-mm-dd"))
+      .write
+      .partitionBy("purchaseTimeDate")
+      .parquet(config.outputBasePath + "partition_by_date/purchases/")
   }
 
 }
