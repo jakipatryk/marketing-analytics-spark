@@ -1,4 +1,4 @@
-# Measured runtimes for jobs with various input types
+# Measured runtimes for jobs with various input types, without Adaptive Query Execution
 
 ## Task #1.1, job `show()`
 - **17971 ms**, Parquet input, 
@@ -26,11 +26,11 @@
 - **7628 ms**, input as Parquet files written after task 1.1, no partitioning there
 
 ## Task #2.2, job `show()`
-- **25859 ms**, Parquet input,
+- **9643 ms**, Parquet input,
   where `events` are partitioned by `eventType` and `purchases` are partitioned by `isConfirmed`
-- **27255 ms**, plain CSV input
-- **28235 ms**, Parquet input, no partitioning
-- **26670 ms**, Parquet input,
+- **12889 ms**, plain CSV input
+- **11195 ms**, Parquet input, no partitioning
+- **15121 ms**, Parquet input,
   where `events` are partitioned by date in `eventTime`,
   and `purchases` are partitioned by date in `purchaseTime`
   
@@ -46,10 +46,10 @@
   and `purchases` are partitioned by date in `purchaseTime`
   
 #### Most popular channels in each campaign, job `show()`
-- **28103 ms**, Parquet input,
+- **10830 ms**, Parquet input,
   where `events` are partitioned by date in `eventTime`,
   and `purchases` are partitioned by date in `purchaseTime`
-- **28947 ms**, plain CSV input
+- **10807 ms**, plain CSV input
 
 ### 2020-11-11
 
@@ -61,7 +61,7 @@
   and `purchases` are partitioned by date in `purchaseTime`
 
 #### Most popular channels in each campaign, job `show()`
-- **13340 ms**, Parquet input,
+- **8396 ms**, Parquet input,
   where `events` are partitioned by date in `eventTime`,
   and `purchases` are partitioned by date in `purchaseTime`
-- **14985 ms**, plain CSV input
+- **9235 ms**, plain CSV input

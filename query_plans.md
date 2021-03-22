@@ -180,142 +180,95 @@ TakeOrderedAndProject(limit=10, orderBy=[revenue#152 DESC NULLS LAST], output=[c
 ```
 == Parsed Logical Plan ==
 'Distinct
-+- 'Aggregate ['campaignId, 'channelIiD], ['campaignId, 'FIRST('channelIid) windowspecdefinition('campaignId, 'COUNT(distinct 'sessionId) DESC NULLS LAST, unspecifiedframe$()) AS channelIiD#70]
-   +- 'UnresolvedRelation [eventsWithSession], [], false
-
++- 'Aggregate ['campaignId, 'channelIid], ['campaignId, 'FIRST('channelIid) windowspecdefinition('campaignId, 'COUNT('eventId) DESC NULLS LAST, unspecifiedframe$()) AS channelIiD#24]
+   +- 'SubqueryAlias __auto_generated_subquery_name
+      +- 'Project ['eventId, 'attributes.campaign_id AS campaignId#22, 'attributes.channel_id AS channelIid#23]
+         +- 'Filter ('eventType = app_open)
+            +- 'UnresolvedRelation [events], [], false
 == Analyzed Logical Plan ==
 campaignId: string, channelIiD: string
 Distinct
-+- Project [campaignId#48, channelIiD#70]
-   +- Project [campaignId#48, channelIid#59, _w1#73L, channelIiD#70, channelIiD#70]
-      +- Window [first(channelIid#59, false) windowspecdefinition(campaignId#48, _w1#73L DESC NULLS LAST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS channelIiD#70], [campaignId#48], [_w1#73L DESC NULLS LAST]
-         +- Aggregate [campaignId#48, channelIiD#59], [campaignId#48, channelIid#59, count(distinct sessionId#31) AS _w1#73L]
-            +- SubqueryAlias eventswithsession
-               +- Project [userId#0, eventId#1, eventType#2, eventTime#3, attributes#4, eventTimeDate#5, sessionId#31, campaignId#48, channelIid#59]
-                  +- Project [userId#0, eventId#1, eventType#2, eventTime#3, attributes#4, eventTimeDate#5, sessionId#31, campaignId#48, channelIid#59, channelIid#59]
-                     +- Window [last(attributes#4[channel_id], true) windowspecdefinition(userId#0, eventTime#3 ASC NULLS FIRST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS channelIid#59], [userId#0], [eventTime#3 ASC NULLS FIRST]
-                        +- Project [userId#0, eventId#1, eventType#2, eventTime#3, attributes#4, eventTimeDate#5, sessionId#31, campaignId#48]
-                           +- Project [userId#0, eventId#1, eventType#2, eventTime#3, attributes#4, eventTimeDate#5, sessionId#31, campaignId#48]
-                              +- Project [userId#0, eventId#1, eventType#2, eventTime#3, attributes#4, eventTimeDate#5, sessionId#31, campaignId#48, campaignId#48]
-                                 +- Window [last(attributes#4[campaign_id], true) windowspecdefinition(userId#0, eventTime#3 ASC NULLS FIRST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS campaignId#48], [userId#0], [eventTime#3 ASC NULLS FIRST]
-                                    +- Project [userId#0, eventId#1, eventType#2, eventTime#3, attributes#4, eventTimeDate#5, sessionId#31]
-                                       +- Project [userId#0, eventId#1, eventType#2, eventTime#3, attributes#4, eventTimeDate#5, sessionId#31]
-                                          +- Project [userId#0, eventId#1, eventType#2, eventTime#3, attributes#4, eventTimeDate#5, tmpSessionId#22, sessionId#31]
-                                             +- Project [userId#0, eventId#1, eventType#2, eventTime#3, attributes#4, eventTimeDate#5, tmpSessionId#22, sessionId#31, sessionId#31]
-                                                +- Window [last(tmpSessionId#22, true) windowspecdefinition(userId#0, eventTime#3 ASC NULLS FIRST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS sessionId#31], [userId#0], [eventTime#3 ASC NULLS FIRST]
-                                                   +- Project [userId#0, eventId#1, eventType#2, eventTime#3, attributes#4, eventTimeDate#5, tmpSessionId#22]
-                                                      +- Project [userId#0, eventId#1, eventType#2, eventTime#3, attributes#4, eventTimeDate#5, CASE WHEN (eventType#2 = app_open) THEN eventId#1 END AS tmpSessionId#22]
-                                                         +- Filter ((eventTimeDate#5 >= cast(2020-10-01 as date)) AND (eventTimeDate#5 <= cast(2020-10-31 as date)))
-                                                            +- Relation[userId#0,eventId#1,eventType#2,eventTime#3,attributes#4,eventTimeDate#5] parquet
-
-== Optimized Logical Plan ==
-Aggregate [campaignId#48, channelIiD#70], [campaignId#48, channelIiD#70]
-+- Project [campaignId#48, channelIiD#70]
-   +- Window [first(channelIid#59, false) windowspecdefinition(campaignId#48, _w1#73L DESC NULLS LAST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS channelIiD#70], [campaignId#48], [_w1#73L DESC NULLS LAST]
-      +- Aggregate [campaignId#48, channelIiD#59], [campaignId#48, channelIid#59, count(distinct sessionId#31) AS _w1#73L]
-         +- Project [sessionId#31, campaignId#48, channelIid#59]
-            +- Window [last(attributes#4[campaign_id], true) windowspecdefinition(userId#0, eventTime#3 ASC NULLS FIRST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS campaignId#48, last(attributes#4[channel_id], true) windowspecdefinition(userId#0, eventTime#3 ASC NULLS FIRST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS channelIid#59], [userId#0], [eventTime#3 ASC NULLS FIRST]
-               +- Project [userId#0, eventTime#3, attributes#4, sessionId#31]
-                  +- Window [last(tmpSessionId#22, true) windowspecdefinition(userId#0, eventTime#3 ASC NULLS FIRST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS sessionId#31], [userId#0], [eventTime#3 ASC NULLS FIRST]
-                     +- Project [userId#0, eventTime#3, attributes#4, CASE WHEN (eventType#2 = app_open) THEN eventId#1 END AS tmpSessionId#22]
-                        +- Filter ((isnotnull(eventTimeDate#5) AND (eventTimeDate#5 >= 18536)) AND (eventTimeDate#5 <= 18566))
++- Project [campaignId#22, channelIiD#24]
+   +- Project [campaignId#22, channelIid#23, _w1#29L, channelIiD#24, channelIiD#24]
+      +- Window [first(channelIid#23, false) windowspecdefinition(campaignId#22, _w1#29L DESC NULLS LAST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS channelIiD#24], [campaignId#22], [_w1#29L DESC NULLS LAST]
+         +- Aggregate [campaignId#22, channelIid#23], [campaignId#22, channelIid#23, count(eventId#1) AS _w1#29L]
+            +- SubqueryAlias __auto_generated_subquery_name
+               +- Project [eventId#1, attributes#4[campaign_id] AS campaignId#22, attributes#4[channel_id] AS channelIid#23]
+                  +- Filter (eventType#2 = app_open)
+                     +- SubqueryAlias events
+                        +- Filter ((eventTimeDate#5 >= cast(2020-10-01 as date)) AND (eventTimeDate#5 <= cast(2020-10-31 as date)))
                            +- Relation[userId#0,eventId#1,eventType#2,eventTime#3,attributes#4,eventTimeDate#5] parquet
-
+== Optimized Logical Plan ==
+Aggregate [campaignId#22, channelIiD#24], [campaignId#22, channelIiD#24]
++- Project [campaignId#22, channelIiD#24]
+   +- Window [first(channelIid#23, false) windowspecdefinition(campaignId#22, _w1#29L DESC NULLS LAST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS channelIiD#24], [campaignId#22], [_w1#29L DESC NULLS LAST]
+      +- Aggregate [campaignId#22, channelIid#23], [campaignId#22, channelIid#23, count(eventId#1) AS _w1#29L]
+         +- Project [eventId#1, attributes#4[campaign_id] AS campaignId#22, attributes#4[channel_id] AS channelIid#23]
+            +- Filter ((((isnotnull(eventTimeDate#5) AND isnotnull(eventType#2)) AND (eventTimeDate#5 >= 18536)) AND (eventTimeDate#5 <= 18566)) AND (eventType#2 = app_open))
+               +- Relation[userId#0,eventId#1,eventType#2,eventTime#3,attributes#4,eventTimeDate#5] parquet
 == Physical Plan ==
-*(8) HashAggregate(keys=[campaignId#48, channelIiD#70], functions=[], output=[campaignId#48, channelIiD#70])
-+- *(8) HashAggregate(keys=[campaignId#48, channelIiD#70], functions=[], output=[campaignId#48, channelIiD#70])
-   +- *(8) Project [campaignId#48, channelIiD#70]
-      +- Window [first(channelIid#59, false) windowspecdefinition(campaignId#48, _w1#73L DESC NULLS LAST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS channelIiD#70], [campaignId#48], [_w1#73L DESC NULLS LAST]
-         +- *(7) Sort [campaignId#48 ASC NULLS FIRST, _w1#73L DESC NULLS LAST], false, 0
-            +- Exchange hashpartitioning(campaignId#48, 200), ENSURE_REQUIREMENTS, [id=#98]
-               +- *(6) HashAggregate(keys=[campaignId#48, channelIiD#59], functions=[count(distinct sessionId#31)], output=[campaignId#48, channelIiD#59, _w1#73L])
-                  +- Exchange hashpartitioning(campaignId#48, channelIiD#59, 200), ENSURE_REQUIREMENTS, [id=#94]
-                     +- *(5) HashAggregate(keys=[campaignId#48, channelIiD#59], functions=[partial_count(distinct sessionId#31)], output=[campaignId#48, channelIiD#59, count#78L])
-                        +- *(5) HashAggregate(keys=[campaignId#48, channelIiD#59, sessionId#31], functions=[], output=[campaignId#48, channelIiD#59, sessionId#31])
-                           +- Exchange hashpartitioning(campaignId#48, channelIiD#59, sessionId#31, 200), ENSURE_REQUIREMENTS, [id=#89]
-                              +- *(4) HashAggregate(keys=[campaignId#48, channelIiD#59, sessionId#31], functions=[], output=[campaignId#48, channelIiD#59, sessionId#31])
-                                 +- *(4) Project [sessionId#31, campaignId#48, channelIid#59]
-                                    +- Window [last(attributes#4[campaign_id], true) windowspecdefinition(userId#0, eventTime#3 ASC NULLS FIRST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS campaignId#48, last(attributes#4[channel_id], true) windowspecdefinition(userId#0, eventTime#3 ASC NULLS FIRST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS channelIid#59], [userId#0], [eventTime#3 ASC NULLS FIRST]
-                                       +- *(3) Project [userId#0, eventTime#3, attributes#4, sessionId#31]
-                                          +- Window [last(tmpSessionId#22, true) windowspecdefinition(userId#0, eventTime#3 ASC NULLS FIRST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS sessionId#31], [userId#0], [eventTime#3 ASC NULLS FIRST]
-                                             +- *(2) Sort [userId#0 ASC NULLS FIRST, eventTime#3 ASC NULLS FIRST], false, 0
-                                                +- Exchange hashpartitioning(userId#0, 200), ENSURE_REQUIREMENTS, [id=#76]
-                                                   +- *(1) Project [userId#0, eventTime#3, attributes#4, CASE WHEN (eventType#2 = app_open) THEN eventId#1 END AS tmpSessionId#22]
-                                                      +- FileScan parquet [userId#0,eventId#1,eventType#2,eventTime#3,attributes#4,eventTimeDate#5] Batched: false, DataFilters: [], Format: Parquet, Location: InMemoryFileIndex[file:/Users/bbaj/IdeaProjects/GridUMarketingAnalytics/src/main/resources/mobile..., PartitionFilters: [isnotnull(eventTimeDate#5), (eventTimeDate#5 >= 18536), (eventTimeDate#5 <= 18566)], PushedFilters: [], ReadSchema: struct<userId:string,eventId:string,eventType:string,eventTime:timestamp,attributes:map<string,st...
+*(4) HashAggregate(keys=[campaignId#22, channelIiD#24], functions=[], output=[campaignId#22, channelIiD#24])
++- *(4) HashAggregate(keys=[campaignId#22, channelIiD#24], functions=[], output=[campaignId#22, channelIiD#24])
+   +- *(4) Project [campaignId#22, channelIiD#24]
+      +- Window [first(channelIid#23, false) windowspecdefinition(campaignId#22, _w1#29L DESC NULLS LAST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS channelIiD#24], [campaignId#22], [_w1#29L DESC NULLS LAST]
+         +- *(3) Sort [campaignId#22 ASC NULLS FIRST, _w1#29L DESC NULLS LAST], false, 0
+            +- Exchange hashpartitioning(campaignId#22, 200), ENSURE_REQUIREMENTS, [id=#50]
+               +- *(2) HashAggregate(keys=[campaignId#22, channelIid#23], functions=[count(eventId#1)], output=[campaignId#22, channelIid#23, _w1#29L])
+                  +- Exchange hashpartitioning(campaignId#22, channelIid#23, 200), ENSURE_REQUIREMENTS, [id=#46]
+                     +- *(1) HashAggregate(keys=[campaignId#22, channelIid#23], functions=[partial_count(eventId#1)], output=[campaignId#22, channelIid#23, count#33L])
+                        +- *(1) Project [eventId#1, attributes#4[campaign_id] AS campaignId#22, attributes#4[channel_id] AS channelIid#23]
+                           +- *(1) Filter (isnotnull(eventType#2) AND (eventType#2 = app_open))
+                              +- FileScan parquet [eventId#1,eventType#2,attributes#4,eventTimeDate#5] Batched: false, DataFilters: [isnotnull(eventType#2), (eventType#2 = app_open)], Format: Parquet, Location: InMemoryFileIndex[file:/Users/bbaj/IdeaProjects/GridUMarketingAnalytics/src/main/resources/in/par..., PartitionFilters: [isnotnull(eventTimeDate#5), (eventTimeDate#5 >= 18536), (eventTimeDate#5 <= 18566)], PushedFilters: [IsNotNull(eventType), EqualTo(eventType,app_open)], ReadSchema: struct<eventId:string,eventType:string,attributes:map<string,string>>
 ```
 
 ### CSV input:
 ```
 == Parsed Logical Plan ==
 'Distinct
-+- 'Aggregate ['campaignId, 'channelIiD], ['campaignId, 'FIRST('channelIid) windowspecdefinition('campaignId, 'COUNT(distinct 'sessionId) DESC NULLS LAST, unspecifiedframe$()) AS channelIiD#113]
-   +- 'UnresolvedRelation [eventsWithSession], [], false
-
++- 'Aggregate ['campaignId, 'channelIid], ['campaignId, 'FIRST('channelIid) windowspecdefinition('campaignId, 'COUNT('eventId) DESC NULLS LAST, unspecifiedframe$()) AS channelIiD#67]
+   +- 'SubqueryAlias __auto_generated_subquery_name
+      +- 'Project ['eventId, 'attributes.campaign_id AS campaignId#65, 'attributes.channel_id AS channelIid#66]
+         +- 'Filter ('eventType = app_open)
+            +- 'UnresolvedRelation [events], [], false
 == Analyzed Logical Plan ==
 campaignId: string, channelIiD: string
 Distinct
-+- Project [campaignId#91, channelIiD#113]
-   +- Project [campaignId#91, channelIid#102, _w1#116L, channelIiD#113, channelIiD#113]
-      +- Window [first(channelIid#102, false) windowspecdefinition(campaignId#91, _w1#116L DESC NULLS LAST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS channelIiD#113], [campaignId#91], [_w1#116L DESC NULLS LAST]
-         +- Aggregate [campaignId#91, channelIiD#102], [campaignId#91, channelIid#102, count(distinct sessionId#74) AS _w1#116L]
-            +- SubqueryAlias eventswithsession
-               +- Project [userId#16, eventId#17, eventType#18, eventTime#26, attributes#44, eventTimeDate#58, sessionId#74, campaignId#91, channelIid#102]
-                  +- Project [userId#16, eventId#17, eventType#18, eventTime#26, attributes#44, eventTimeDate#58, sessionId#74, campaignId#91, channelIid#102, channelIid#102]
-                     +- Window [last(attributes#44[channel_id], true) windowspecdefinition(userId#16, eventTime#26 ASC NULLS FIRST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS channelIid#102], [userId#16], [eventTime#26 ASC NULLS FIRST]
-                        +- Project [userId#16, eventId#17, eventType#18, eventTime#26, attributes#44, eventTimeDate#58, sessionId#74, campaignId#91]
-                           +- Project [userId#16, eventId#17, eventType#18, eventTime#26, attributes#44, eventTimeDate#58, sessionId#74, campaignId#91]
-                              +- Project [userId#16, eventId#17, eventType#18, eventTime#26, attributes#44, eventTimeDate#58, sessionId#74, campaignId#91, campaignId#91]
-                                 +- Window [last(attributes#44[campaign_id], true) windowspecdefinition(userId#16, eventTime#26 ASC NULLS FIRST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS campaignId#91], [userId#16], [eventTime#26 ASC NULLS FIRST]
-                                    +- Project [userId#16, eventId#17, eventType#18, eventTime#26, attributes#44, eventTimeDate#58, sessionId#74]
-                                       +- Project [userId#16, eventId#17, eventType#18, eventTime#26, attributes#44, eventTimeDate#58, sessionId#74]
-                                          +- Project [userId#16, eventId#17, eventType#18, eventTime#26, attributes#44, eventTimeDate#58, tmpSessionId#65, sessionId#74]
-                                             +- Project [userId#16, eventId#17, eventType#18, eventTime#26, attributes#44, eventTimeDate#58, tmpSessionId#65, sessionId#74, sessionId#74]
-                                                +- Window [last(tmpSessionId#65, true) windowspecdefinition(userId#16, eventTime#26 ASC NULLS FIRST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS sessionId#74], [userId#16], [eventTime#26 ASC NULLS FIRST]
-                                                   +- Project [userId#16, eventId#17, eventType#18, eventTime#26, attributes#44, eventTimeDate#58, tmpSessionId#65]
-                                                      +- Project [userId#16, eventId#17, eventType#18, eventTime#26, attributes#44, eventTimeDate#58, CASE WHEN (eventType#18 = app_open) THEN eventId#17 END AS tmpSessionId#65]
-                                                         +- Filter ((eventTimeDate#58 >= cast(2020-10-01 as date)) AND (eventTimeDate#58 <= cast(2020-10-31 as date)))
-                                                            +- Project [userId#16, eventId#17, eventType#18, eventTime#26, attributes#44, to_date('eventTime, Some(yyyy-mm-dd)) AS eventTimeDate#58]
-                                                               +- Project [userId#16, eventId#17, eventType#18, eventTime#26, from_json(MapType(StringType,StringType,true), attributes#38, Some(Europe/Warsaw)) AS attributes#44]
-                                                                  +- Project [userId#16, eventId#17, eventType#18, eventTime#26, regexp_replace(attributes#32, "", ', 1) AS attributes#38]
-                                                                     +- Project [userId#16, eventId#17, eventType#18, eventTime#26, regexp_extract(attributes#20, "?(\{.+\})"?, 1) AS attributes#32]
-                                                                        +- Project [userId#16, eventId#17, eventType#18, cast(eventTime#19 as timestamp) AS eventTime#26, attributes#20]
-                                                                           +- Relation[userId#16,eventId#17,eventType#18,eventTime#19,attributes#20] csv
-
++- Project [campaignId#65, channelIiD#67]
+   +- Project [campaignId#65, channelIid#66, _w1#72L, channelIiD#67, channelIiD#67]
+      +- Window [first(channelIid#66, false) windowspecdefinition(campaignId#65, _w1#72L DESC NULLS LAST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS channelIiD#67], [campaignId#65], [_w1#72L DESC NULLS LAST]
+         +- Aggregate [campaignId#65, channelIid#66], [campaignId#65, channelIid#66, count(eventId#17) AS _w1#72L]
+            +- SubqueryAlias __auto_generated_subquery_name
+               +- Project [eventId#17, attributes#44[campaign_id] AS campaignId#65, attributes#44[channel_id] AS channelIid#66]
+                  +- Filter (eventType#18 = app_open)
+                     +- SubqueryAlias events
+                        +- Filter ((eventTimeDate#58 >= cast(2020-10-01 as date)) AND (eventTimeDate#58 <= cast(2020-10-31 as date)))
+                           +- Project [userId#16, eventId#17, eventType#18, eventTime#26, attributes#44, to_date('eventTime, Some(yyyy-mm-dd)) AS eventTimeDate#58]
+                              +- Project [userId#16, eventId#17, eventType#18, eventTime#26, from_json(MapType(StringType,StringType,true), attributes#38, Some(Europe/Warsaw)) AS attributes#44]
+                                 +- Project [userId#16, eventId#17, eventType#18, eventTime#26, regexp_replace(attributes#32, "", ', 1) AS attributes#38]
+                                    +- Project [userId#16, eventId#17, eventType#18, eventTime#26, regexp_extract(attributes#20, "?(\{.+\})"?, 1) AS attributes#32]
+                                       +- Project [userId#16, eventId#17, eventType#18, cast(eventTime#19 as timestamp) AS eventTime#26, attributes#20]
+                                          +- Relation[userId#16,eventId#17,eventType#18,eventTime#19,attributes#20] csv
 == Optimized Logical Plan ==
-Aggregate [campaignId#91, channelIiD#113], [campaignId#91, channelIiD#113]
-+- Project [campaignId#91, channelIiD#113]
-   +- Window [first(channelIid#102, false) windowspecdefinition(campaignId#91, _w1#116L DESC NULLS LAST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS channelIiD#113], [campaignId#91], [_w1#116L DESC NULLS LAST]
-      +- Aggregate [campaignId#91, channelIiD#102], [campaignId#91, channelIid#102, count(distinct sessionId#74) AS _w1#116L]
-         +- Project [sessionId#74, campaignId#91, channelIid#102]
-            +- Window [last(attributes#44[campaign_id], true) windowspecdefinition(userId#16, eventTime#26 ASC NULLS FIRST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS campaignId#91, last(attributes#44[channel_id], true) windowspecdefinition(userId#16, eventTime#26 ASC NULLS FIRST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS channelIid#102], [userId#16], [eventTime#26 ASC NULLS FIRST]
-               +- Project [userId#16, eventTime#26, attributes#44, sessionId#74]
-                  +- Window [last(tmpSessionId#65, true) windowspecdefinition(userId#16, eventTime#26 ASC NULLS FIRST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS sessionId#74], [userId#16], [eventTime#26 ASC NULLS FIRST]
-                     +- Project [userId#16, cast(eventTime#19 as timestamp) AS eventTime#26, from_json(MapType(StringType,StringType,true), regexp_replace(regexp_extract(attributes#20, "?(\{.+\})"?, 1), "", ', 1), Some(Europe/Warsaw)) AS attributes#44, CASE WHEN (eventType#18 = app_open) THEN eventId#17 END AS tmpSessionId#65]
-                        +- Filter ((cast(gettimestamp(cast(eventTime#19 as timestamp), yyyy-mm-dd, Some(Europe/Warsaw), false) as date) >= 18536) AND (cast(gettimestamp(cast(eventTime#19 as timestamp), yyyy-mm-dd, Some(Europe/Warsaw), false) as date) <= 18566))
-                           +- Relation[userId#16,eventId#17,eventType#18,eventTime#19,attributes#20] csv
-
+Aggregate [campaignId#65, channelIiD#67], [campaignId#65, channelIiD#67]
++- Project [campaignId#65, channelIiD#67]
+   +- Window [first(channelIid#66, false) windowspecdefinition(campaignId#65, _w1#72L DESC NULLS LAST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS channelIiD#67], [campaignId#65], [_w1#72L DESC NULLS LAST]
+      +- Aggregate [campaignId#65, channelIid#66], [campaignId#65, channelIid#66, count(eventId#17) AS _w1#72L]
+         +- Project [eventId#17, from_json(MapType(StringType,StringType,true), regexp_replace(regexp_extract(attributes#20, "?(\{.+\})"?, 1), "", ', 1), Some(Europe/Warsaw))[campaign_id] AS campaignId#65, from_json(MapType(StringType,StringType,true), regexp_replace(regexp_extract(attributes#20, "?(\{.+\})"?, 1), "", ', 1), Some(Europe/Warsaw))[channel_id] AS channelIid#66]
+            +- Filter (((isnotnull(eventType#18) AND (cast(gettimestamp(cast(eventTime#19 as timestamp), yyyy-mm-dd, Some(Europe/Warsaw), false) as date) >= 18536)) AND (cast(gettimestamp(cast(eventTime#19 as timestamp), yyyy-mm-dd, Some(Europe/Warsaw), false) as date) <= 18566)) AND (eventType#18 = app_open))
+               +- Relation[userId#16,eventId#17,eventType#18,eventTime#19,attributes#20] csv
 == Physical Plan ==
-*(8) HashAggregate(keys=[campaignId#91, channelIiD#113], functions=[], output=[campaignId#91, channelIiD#113])
-+- *(8) HashAggregate(keys=[campaignId#91, channelIiD#113], functions=[], output=[campaignId#91, channelIiD#113])
-   +- *(8) Project [campaignId#91, channelIiD#113]
-      +- Window [first(channelIid#102, false) windowspecdefinition(campaignId#91, _w1#116L DESC NULLS LAST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS channelIiD#113], [campaignId#91], [_w1#116L DESC NULLS LAST]
-         +- *(7) Sort [campaignId#91 ASC NULLS FIRST, _w1#116L DESC NULLS LAST], false, 0
-            +- Exchange hashpartitioning(campaignId#91, 200), ENSURE_REQUIREMENTS, [id=#120]
-               +- *(6) HashAggregate(keys=[campaignId#91, channelIiD#102], functions=[count(distinct sessionId#74)], output=[campaignId#91, channelIiD#102, _w1#116L])
-                  +- Exchange hashpartitioning(campaignId#91, channelIiD#102, 200), ENSURE_REQUIREMENTS, [id=#116]
-                     +- *(5) HashAggregate(keys=[campaignId#91, channelIiD#102], functions=[partial_count(distinct sessionId#74)], output=[campaignId#91, channelIiD#102, count#121L])
-                        +- *(5) HashAggregate(keys=[campaignId#91, channelIiD#102, sessionId#74], functions=[], output=[campaignId#91, channelIiD#102, sessionId#74])
-                           +- Exchange hashpartitioning(campaignId#91, channelIiD#102, sessionId#74, 200), ENSURE_REQUIREMENTS, [id=#111]
-                              +- *(4) HashAggregate(keys=[campaignId#91, channelIiD#102, sessionId#74], functions=[], output=[campaignId#91, channelIiD#102, sessionId#74])
-                                 +- *(4) Project [sessionId#74, campaignId#91, channelIid#102]
-                                    +- Window [last(attributes#44[campaign_id], true) windowspecdefinition(userId#16, eventTime#26 ASC NULLS FIRST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS campaignId#91, last(attributes#44[channel_id], true) windowspecdefinition(userId#16, eventTime#26 ASC NULLS FIRST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS channelIid#102], [userId#16], [eventTime#26 ASC NULLS FIRST]
-                                       +- *(3) Project [userId#16, eventTime#26, attributes#44, sessionId#74]
-                                          +- Window [last(tmpSessionId#65, true) windowspecdefinition(userId#16, eventTime#26 ASC NULLS FIRST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS sessionId#74], [userId#16], [eventTime#26 ASC NULLS FIRST]
-                                             +- *(2) Sort [userId#16 ASC NULLS FIRST, eventTime#26 ASC NULLS FIRST], false, 0
-                                                +- Exchange hashpartitioning(userId#16, 200), ENSURE_REQUIREMENTS, [id=#98]
-                                                   +- Project [userId#16, cast(eventTime#19 as timestamp) AS eventTime#26, from_json(MapType(StringType,StringType,true), regexp_replace(regexp_extract(attributes#20, "?(\{.+\})"?, 1), "", ', 1), Some(Europe/Warsaw)) AS attributes#44, CASE WHEN (eventType#18 = app_open) THEN eventId#17 END AS tmpSessionId#65]
-                                                      +- *(1) Filter ((cast(gettimestamp(cast(eventTime#19 as timestamp), yyyy-mm-dd, Some(Europe/Warsaw), false) as date) >= 18536) AND (cast(gettimestamp(cast(eventTime#19 as timestamp), yyyy-mm-dd, Some(Europe/Warsaw), false) as date) <= 18566))
-                                                         +- FileScan csv [userId#16,eventId#17,eventType#18,eventTime#19,attributes#20] Batched: false, DataFilters: [(cast(gettimestamp(cast(eventTime#19 as timestamp), yyyy-mm-dd, Some(Europe/Warsaw), false) as d..., Format: CSV, Location: InMemoryFileIndex[file:/Users/bbaj/IdeaProjects/GridUMarketingAnalytics/src/main/resources/mobile..., PartitionFilters: [], PushedFilters: [], ReadSchema: struct<userId:string,eventId:string,eventType:string,eventTime:string,attributes:string>
+*(5) HashAggregate(keys=[campaignId#65, channelIiD#67], functions=[], output=[campaignId#65, channelIiD#67])
++- *(5) HashAggregate(keys=[campaignId#65, channelIiD#67], functions=[], output=[campaignId#65, channelIiD#67])
+   +- *(5) Project [campaignId#65, channelIiD#67]
+      +- Window [first(channelIid#66, false) windowspecdefinition(campaignId#65, _w1#72L DESC NULLS LAST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS channelIiD#67], [campaignId#65], [_w1#72L DESC NULLS LAST]
+         +- *(4) Sort [campaignId#65 ASC NULLS FIRST, _w1#72L DESC NULLS LAST], false, 0
+            +- Exchange hashpartitioning(campaignId#65, 200), ENSURE_REQUIREMENTS, [id=#71]
+               +- *(3) HashAggregate(keys=[campaignId#65, channelIid#66], functions=[count(eventId#17)], output=[campaignId#65, channelIid#66, _w1#72L])
+                  +- Exchange hashpartitioning(campaignId#65, channelIid#66, 200), ENSURE_REQUIREMENTS, [id=#67]
+                     +- *(2) HashAggregate(keys=[campaignId#65, channelIid#66], functions=[partial_count(eventId#17)], output=[campaignId#65, channelIid#66, count#76L])
+                        +- Project [eventId#17, from_json(MapType(StringType,StringType,true), regexp_replace(regexp_extract(attributes#20, "?(\{.+\})"?, 1), "", ', 1), Some(Europe/Warsaw))[campaign_id] AS campaignId#65, from_json(MapType(StringType,StringType,true), regexp_replace(regexp_extract(attributes#20, "?(\{.+\})"?, 1), "", ', 1), Some(Europe/Warsaw))[channel_id] AS channelIid#66]
+                           +- *(1) Filter (((isnotnull(eventType#18) AND (cast(gettimestamp(cast(eventTime#19 as timestamp), yyyy-mm-dd, Some(Europe/Warsaw), false) as date) >= 18536)) AND (cast(gettimestamp(cast(eventTime#19 as timestamp), yyyy-mm-dd, Some(Europe/Warsaw), false) as date) <= 18566)) AND (eventType#18 = app_open))
+                              +- FileScan csv [eventId#17,eventType#18,eventTime#19,attributes#20] Batched: false, DataFilters: [isnotnull(eventType#18), (cast(gettimestamp(cast(eventTime#19 as timestamp), yyyy-mm-dd, Some(Eu..., Format: CSV, Location: InMemoryFileIndex[file:/Users/bbaj/IdeaProjects/GridUMarketingAnalytics/src/main/resources/mobile..., PartitionFilters: [], PushedFilters: [IsNotNull(eventType), EqualTo(eventType,app_open)], ReadSchema: struct<eventId:string,eventType:string,eventTime:string,attributes:string>
 ```
 
 ## Top campaigns by revenue at 2020-11-11
@@ -498,141 +451,93 @@ TakeOrderedAndProject(limit=10, orderBy=[revenue#152 DESC NULLS LAST], output=[c
 ```
 == Parsed Logical Plan ==
 'Distinct
-+- 'Aggregate ['campaignId, 'channelIiD], ['campaignId, 'FIRST('channelIid) windowspecdefinition('campaignId, 'COUNT(distinct 'sessionId) DESC NULLS LAST, unspecifiedframe$()) AS channelIiD#70]
-   +- 'UnresolvedRelation [eventsWithSession], [], false
-
++- 'Aggregate ['campaignId, 'channelIid], ['campaignId, 'FIRST('channelIid) windowspecdefinition('campaignId, 'COUNT('eventId) DESC NULLS LAST, unspecifiedframe$()) AS channelIiD#24]
+   +- 'SubqueryAlias __auto_generated_subquery_name
+      +- 'Project ['eventId, 'attributes.campaign_id AS campaignId#22, 'attributes.channel_id AS channelIid#23]
+         +- 'Filter ('eventType = app_open)
+            +- 'UnresolvedRelation [events], [], false
 == Analyzed Logical Plan ==
 campaignId: string, channelIiD: string
 Distinct
-+- Project [campaignId#48, channelIiD#70]
-   +- Project [campaignId#48, channelIid#59, _w1#73L, channelIiD#70, channelIiD#70]
-      +- Window [first(channelIid#59, false) windowspecdefinition(campaignId#48, _w1#73L DESC NULLS LAST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS channelIiD#70], [campaignId#48], [_w1#73L DESC NULLS LAST]
-         +- Aggregate [campaignId#48, channelIiD#59], [campaignId#48, channelIid#59, count(distinct sessionId#31) AS _w1#73L]
-            +- SubqueryAlias eventswithsession
-               +- Project [userId#0, eventId#1, eventType#2, eventTime#3, attributes#4, eventTimeDate#5, sessionId#31, campaignId#48, channelIid#59]
-                  +- Project [userId#0, eventId#1, eventType#2, eventTime#3, attributes#4, eventTimeDate#5, sessionId#31, campaignId#48, channelIid#59, channelIid#59]
-                     +- Window [last(attributes#4[channel_id], true) windowspecdefinition(userId#0, eventTime#3 ASC NULLS FIRST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS channelIid#59], [userId#0], [eventTime#3 ASC NULLS FIRST]
-                        +- Project [userId#0, eventId#1, eventType#2, eventTime#3, attributes#4, eventTimeDate#5, sessionId#31, campaignId#48]
-                           +- Project [userId#0, eventId#1, eventType#2, eventTime#3, attributes#4, eventTimeDate#5, sessionId#31, campaignId#48]
-                              +- Project [userId#0, eventId#1, eventType#2, eventTime#3, attributes#4, eventTimeDate#5, sessionId#31, campaignId#48, campaignId#48]
-                                 +- Window [last(attributes#4[campaign_id], true) windowspecdefinition(userId#0, eventTime#3 ASC NULLS FIRST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS campaignId#48], [userId#0], [eventTime#3 ASC NULLS FIRST]
-                                    +- Project [userId#0, eventId#1, eventType#2, eventTime#3, attributes#4, eventTimeDate#5, sessionId#31]
-                                       +- Project [userId#0, eventId#1, eventType#2, eventTime#3, attributes#4, eventTimeDate#5, sessionId#31]
-                                          +- Project [userId#0, eventId#1, eventType#2, eventTime#3, attributes#4, eventTimeDate#5, tmpSessionId#22, sessionId#31]
-                                             +- Project [userId#0, eventId#1, eventType#2, eventTime#3, attributes#4, eventTimeDate#5, tmpSessionId#22, sessionId#31, sessionId#31]
-                                                +- Window [last(tmpSessionId#22, true) windowspecdefinition(userId#0, eventTime#3 ASC NULLS FIRST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS sessionId#31], [userId#0], [eventTime#3 ASC NULLS FIRST]
-                                                   +- Project [userId#0, eventId#1, eventType#2, eventTime#3, attributes#4, eventTimeDate#5, tmpSessionId#22]
-                                                      +- Project [userId#0, eventId#1, eventType#2, eventTime#3, attributes#4, eventTimeDate#5, CASE WHEN (eventType#2 = app_open) THEN eventId#1 END AS tmpSessionId#22]
-                                                         +- Filter (eventTimeDate#5 = cast(2020-11-11 as date))
-                                                            +- Relation[userId#0,eventId#1,eventType#2,eventTime#3,attributes#4,eventTimeDate#5] parquet
-
-== Optimized Logical Plan ==
-Aggregate [campaignId#48, channelIiD#70], [campaignId#48, channelIiD#70]
-+- Project [campaignId#48, channelIiD#70]
-   +- Window [first(channelIid#59, false) windowspecdefinition(campaignId#48, _w1#73L DESC NULLS LAST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS channelIiD#70], [campaignId#48], [_w1#73L DESC NULLS LAST]
-      +- Aggregate [campaignId#48, channelIiD#59], [campaignId#48, channelIid#59, count(distinct sessionId#31) AS _w1#73L]
-         +- Project [sessionId#31, campaignId#48, channelIid#59]
-            +- Window [last(attributes#4[campaign_id], true) windowspecdefinition(userId#0, eventTime#3 ASC NULLS FIRST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS campaignId#48, last(attributes#4[channel_id], true) windowspecdefinition(userId#0, eventTime#3 ASC NULLS FIRST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS channelIid#59], [userId#0], [eventTime#3 ASC NULLS FIRST]
-               +- Project [userId#0, eventTime#3, attributes#4, sessionId#31]
-                  +- Window [last(tmpSessionId#22, true) windowspecdefinition(userId#0, eventTime#3 ASC NULLS FIRST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS sessionId#31], [userId#0], [eventTime#3 ASC NULLS FIRST]
-                     +- Project [userId#0, eventTime#3, attributes#4, CASE WHEN (eventType#2 = app_open) THEN eventId#1 END AS tmpSessionId#22]
-                        +- Filter (isnotnull(eventTimeDate#5) AND (eventTimeDate#5 = 18577))
++- Project [campaignId#22, channelIiD#24]
+   +- Project [campaignId#22, channelIid#23, _w1#29L, channelIiD#24, channelIiD#24]
+      +- Window [first(channelIid#23, false) windowspecdefinition(campaignId#22, _w1#29L DESC NULLS LAST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS channelIiD#24], [campaignId#22], [_w1#29L DESC NULLS LAST]
+         +- Aggregate [campaignId#22, channelIid#23], [campaignId#22, channelIid#23, count(eventId#1) AS _w1#29L]
+            +- SubqueryAlias __auto_generated_subquery_name
+               +- Project [eventId#1, attributes#4[campaign_id] AS campaignId#22, attributes#4[channel_id] AS channelIid#23]
+                  +- Filter (eventType#2 = app_open)
+                     +- SubqueryAlias events
+                        +- Filter (eventTimeDate#5 = cast(2020-11-11 as date))
                            +- Relation[userId#0,eventId#1,eventType#2,eventTime#3,attributes#4,eventTimeDate#5] parquet
-
+== Optimized Logical Plan ==
+Aggregate [campaignId#22, channelIiD#24], [campaignId#22, channelIiD#24]
++- Project [campaignId#22, channelIiD#24]
+   +- Window [first(channelIid#23, false) windowspecdefinition(campaignId#22, _w1#29L DESC NULLS LAST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS channelIiD#24], [campaignId#22], [_w1#29L DESC NULLS LAST]
+      +- Aggregate [campaignId#22, channelIid#23], [campaignId#22, channelIid#23, count(eventId#1) AS _w1#29L]
+         +- Project [eventId#1, attributes#4[campaign_id] AS campaignId#22, attributes#4[channel_id] AS channelIid#23]
+            +- Filter (((isnotnull(eventTimeDate#5) AND isnotnull(eventType#2)) AND (eventTimeDate#5 = 18577)) AND (eventType#2 = app_open))
+               +- Relation[userId#0,eventId#1,eventType#2,eventTime#3,attributes#4,eventTimeDate#5] parquet
 == Physical Plan ==
-*(8) HashAggregate(keys=[campaignId#48, channelIiD#70], functions=[], output=[campaignId#48, channelIiD#70])
-+- *(8) HashAggregate(keys=[campaignId#48, channelIiD#70], functions=[], output=[campaignId#48, channelIiD#70])
-   +- *(8) Project [campaignId#48, channelIiD#70]
-      +- Window [first(channelIid#59, false) windowspecdefinition(campaignId#48, _w1#73L DESC NULLS LAST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS channelIiD#70], [campaignId#48], [_w1#73L DESC NULLS LAST]
-         +- *(7) Sort [campaignId#48 ASC NULLS FIRST, _w1#73L DESC NULLS LAST], false, 0
-            +- Exchange hashpartitioning(campaignId#48, 200), ENSURE_REQUIREMENTS, [id=#98]
-               +- *(6) HashAggregate(keys=[campaignId#48, channelIiD#59], functions=[count(distinct sessionId#31)], output=[campaignId#48, channelIiD#59, _w1#73L])
-                  +- Exchange hashpartitioning(campaignId#48, channelIiD#59, 200), ENSURE_REQUIREMENTS, [id=#94]
-                     +- *(5) HashAggregate(keys=[campaignId#48, channelIiD#59], functions=[partial_count(distinct sessionId#31)], output=[campaignId#48, channelIiD#59, count#78L])
-                        +- *(5) HashAggregate(keys=[campaignId#48, channelIiD#59, sessionId#31], functions=[], output=[campaignId#48, channelIiD#59, sessionId#31])
-                           +- Exchange hashpartitioning(campaignId#48, channelIiD#59, sessionId#31, 200), ENSURE_REQUIREMENTS, [id=#89]
-                              +- *(4) HashAggregate(keys=[campaignId#48, channelIiD#59, sessionId#31], functions=[], output=[campaignId#48, channelIiD#59, sessionId#31])
-                                 +- *(4) Project [sessionId#31, campaignId#48, channelIid#59]
-                                    +- Window [last(attributes#4[campaign_id], true) windowspecdefinition(userId#0, eventTime#3 ASC NULLS FIRST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS campaignId#48, last(attributes#4[channel_id], true) windowspecdefinition(userId#0, eventTime#3 ASC NULLS FIRST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS channelIid#59], [userId#0], [eventTime#3 ASC NULLS FIRST]
-                                       +- *(3) Project [userId#0, eventTime#3, attributes#4, sessionId#31]
-                                          +- Window [last(tmpSessionId#22, true) windowspecdefinition(userId#0, eventTime#3 ASC NULLS FIRST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS sessionId#31], [userId#0], [eventTime#3 ASC NULLS FIRST]
-                                             +- *(2) Sort [userId#0 ASC NULLS FIRST, eventTime#3 ASC NULLS FIRST], false, 0
-                                                +- Exchange hashpartitioning(userId#0, 200), ENSURE_REQUIREMENTS, [id=#76]
-                                                   +- *(1) Project [userId#0, eventTime#3, attributes#4, CASE WHEN (eventType#2 = app_open) THEN eventId#1 END AS tmpSessionId#22]
-                                                      +- FileScan parquet [userId#0,eventId#1,eventType#2,eventTime#3,attributes#4,eventTimeDate#5] Batched: false, DataFilters: [], Format: Parquet, Location: InMemoryFileIndex[file:/Users/bbaj/IdeaProjects/GridUMarketingAnalytics/src/main/resources/mobile..., PartitionFilters: [isnotnull(eventTimeDate#5), (eventTimeDate#5 = 18577)], PushedFilters: [], ReadSchema: struct<userId:string,eventId:string,eventType:string,eventTime:timestamp,attributes:map<string,st...
-
+*(4) HashAggregate(keys=[campaignId#22, channelIiD#24], functions=[], output=[campaignId#22, channelIiD#24])
++- *(4) HashAggregate(keys=[campaignId#22, channelIiD#24], functions=[], output=[campaignId#22, channelIiD#24])
+   +- *(4) Project [campaignId#22, channelIiD#24]
+      +- Window [first(channelIid#23, false) windowspecdefinition(campaignId#22, _w1#29L DESC NULLS LAST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS channelIiD#24], [campaignId#22], [_w1#29L DESC NULLS LAST]
+         +- *(3) Sort [campaignId#22 ASC NULLS FIRST, _w1#29L DESC NULLS LAST], false, 0
+            +- Exchange hashpartitioning(campaignId#22, 200), ENSURE_REQUIREMENTS, [id=#50]
+               +- *(2) HashAggregate(keys=[campaignId#22, channelIid#23], functions=[count(eventId#1)], output=[campaignId#22, channelIid#23, _w1#29L])
+                  +- Exchange hashpartitioning(campaignId#22, channelIid#23, 200), ENSURE_REQUIREMENTS, [id=#46]
+                     +- *(1) HashAggregate(keys=[campaignId#22, channelIid#23], functions=[partial_count(eventId#1)], output=[campaignId#22, channelIid#23, count#33L])
+                        +- *(1) Project [eventId#1, attributes#4[campaign_id] AS campaignId#22, attributes#4[channel_id] AS channelIid#23]
+                           +- *(1) Filter (isnotnull(eventType#2) AND (eventType#2 = app_open))
+                              +- FileScan parquet [eventId#1,eventType#2,attributes#4,eventTimeDate#5] Batched: false, DataFilters: [isnotnull(eventType#2), (eventType#2 = app_open)], Format: Parquet, Location: InMemoryFileIndex[file:/Users/bbaj/IdeaProjects/GridUMarketingAnalytics/src/main/resources/in/par..., PartitionFilters: [isnotnull(eventTimeDate#5), (eventTimeDate#5 = 18577)], PushedFilters: [IsNotNull(eventType), EqualTo(eventType,app_open)], ReadSchema: struct<eventId:string,eventType:string,attributes:map<string,string>>
 ```
 
 ### CSV input:
 ```
 == Parsed Logical Plan ==
 'Distinct
-+- 'Aggregate ['campaignId, 'channelIiD], ['campaignId, 'FIRST('channelIid) windowspecdefinition('campaignId, 'COUNT(distinct 'sessionId) DESC NULLS LAST, unspecifiedframe$()) AS channelIiD#113]
-   +- 'UnresolvedRelation [eventsWithSession], [], false
-
++- 'Aggregate ['campaignId, 'channelIid], ['campaignId, 'FIRST('channelIid) windowspecdefinition('campaignId, 'COUNT('eventId) DESC NULLS LAST, unspecifiedframe$()) AS channelIiD#67]
+   +- 'SubqueryAlias __auto_generated_subquery_name
+      +- 'Project ['eventId, 'attributes.campaign_id AS campaignId#65, 'attributes.channel_id AS channelIid#66]
+         +- 'Filter ('eventType = app_open)
+            +- 'UnresolvedRelation [events], [], false
 == Analyzed Logical Plan ==
 campaignId: string, channelIiD: string
 Distinct
-+- Project [campaignId#91, channelIiD#113]
-   +- Project [campaignId#91, channelIid#102, _w1#116L, channelIiD#113, channelIiD#113]
-      +- Window [first(channelIid#102, false) windowspecdefinition(campaignId#91, _w1#116L DESC NULLS LAST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS channelIiD#113], [campaignId#91], [_w1#116L DESC NULLS LAST]
-         +- Aggregate [campaignId#91, channelIiD#102], [campaignId#91, channelIid#102, count(distinct sessionId#74) AS _w1#116L]
-            +- SubqueryAlias eventswithsession
-               +- Project [userId#16, eventId#17, eventType#18, eventTime#26, attributes#44, eventTimeDate#58, sessionId#74, campaignId#91, channelIid#102]
-                  +- Project [userId#16, eventId#17, eventType#18, eventTime#26, attributes#44, eventTimeDate#58, sessionId#74, campaignId#91, channelIid#102, channelIid#102]
-                     +- Window [last(attributes#44[channel_id], true) windowspecdefinition(userId#16, eventTime#26 ASC NULLS FIRST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS channelIid#102], [userId#16], [eventTime#26 ASC NULLS FIRST]
-                        +- Project [userId#16, eventId#17, eventType#18, eventTime#26, attributes#44, eventTimeDate#58, sessionId#74, campaignId#91]
-                           +- Project [userId#16, eventId#17, eventType#18, eventTime#26, attributes#44, eventTimeDate#58, sessionId#74, campaignId#91]
-                              +- Project [userId#16, eventId#17, eventType#18, eventTime#26, attributes#44, eventTimeDate#58, sessionId#74, campaignId#91, campaignId#91]
-                                 +- Window [last(attributes#44[campaign_id], true) windowspecdefinition(userId#16, eventTime#26 ASC NULLS FIRST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS campaignId#91], [userId#16], [eventTime#26 ASC NULLS FIRST]
-                                    +- Project [userId#16, eventId#17, eventType#18, eventTime#26, attributes#44, eventTimeDate#58, sessionId#74]
-                                       +- Project [userId#16, eventId#17, eventType#18, eventTime#26, attributes#44, eventTimeDate#58, sessionId#74]
-                                          +- Project [userId#16, eventId#17, eventType#18, eventTime#26, attributes#44, eventTimeDate#58, tmpSessionId#65, sessionId#74]
-                                             +- Project [userId#16, eventId#17, eventType#18, eventTime#26, attributes#44, eventTimeDate#58, tmpSessionId#65, sessionId#74, sessionId#74]
-                                                +- Window [last(tmpSessionId#65, true) windowspecdefinition(userId#16, eventTime#26 ASC NULLS FIRST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS sessionId#74], [userId#16], [eventTime#26 ASC NULLS FIRST]
-                                                   +- Project [userId#16, eventId#17, eventType#18, eventTime#26, attributes#44, eventTimeDate#58, tmpSessionId#65]
-                                                      +- Project [userId#16, eventId#17, eventType#18, eventTime#26, attributes#44, eventTimeDate#58, CASE WHEN (eventType#18 = app_open) THEN eventId#17 END AS tmpSessionId#65]
-                                                         +- Filter (eventTimeDate#58 = cast(2020-11-11 as date))
-                                                            +- Project [userId#16, eventId#17, eventType#18, eventTime#26, attributes#44, to_date('eventTime, Some(yyyy-mm-dd)) AS eventTimeDate#58]
-                                                               +- Project [userId#16, eventId#17, eventType#18, eventTime#26, from_json(MapType(StringType,StringType,true), attributes#38, Some(Europe/Warsaw)) AS attributes#44]
-                                                                  +- Project [userId#16, eventId#17, eventType#18, eventTime#26, regexp_replace(attributes#32, "", ', 1) AS attributes#38]
-                                                                     +- Project [userId#16, eventId#17, eventType#18, eventTime#26, regexp_extract(attributes#20, "?(\{.+\})"?, 1) AS attributes#32]
-                                                                        +- Project [userId#16, eventId#17, eventType#18, cast(eventTime#19 as timestamp) AS eventTime#26, attributes#20]
-                                                                           +- Relation[userId#16,eventId#17,eventType#18,eventTime#19,attributes#20] csv
-
++- Project [campaignId#65, channelIiD#67]
+   +- Project [campaignId#65, channelIid#66, _w1#72L, channelIiD#67, channelIiD#67]
+      +- Window [first(channelIid#66, false) windowspecdefinition(campaignId#65, _w1#72L DESC NULLS LAST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS channelIiD#67], [campaignId#65], [_w1#72L DESC NULLS LAST]
+         +- Aggregate [campaignId#65, channelIid#66], [campaignId#65, channelIid#66, count(eventId#17) AS _w1#72L]
+            +- SubqueryAlias __auto_generated_subquery_name
+               +- Project [eventId#17, attributes#44[campaign_id] AS campaignId#65, attributes#44[channel_id] AS channelIid#66]
+                  +- Filter (eventType#18 = app_open)
+                     +- SubqueryAlias events
+                        +- Filter (eventTimeDate#58 = cast(2020-11-11 as date))
+                           +- Project [userId#16, eventId#17, eventType#18, eventTime#26, attributes#44, to_date('eventTime, Some(yyyy-mm-dd)) AS eventTimeDate#58]
+                              +- Project [userId#16, eventId#17, eventType#18, eventTime#26, from_json(MapType(StringType,StringType,true), attributes#38, Some(Europe/Warsaw)) AS attributes#44]
+                                 +- Project [userId#16, eventId#17, eventType#18, eventTime#26, regexp_replace(attributes#32, "", ', 1) AS attributes#38]
+                                    +- Project [userId#16, eventId#17, eventType#18, eventTime#26, regexp_extract(attributes#20, "?(\{.+\})"?, 1) AS attributes#32]
+                                       +- Project [userId#16, eventId#17, eventType#18, cast(eventTime#19 as timestamp) AS eventTime#26, attributes#20]
+                                          +- Relation[userId#16,eventId#17,eventType#18,eventTime#19,attributes#20] csv
 == Optimized Logical Plan ==
-Aggregate [campaignId#91, channelIiD#113], [campaignId#91, channelIiD#113]
-+- Project [campaignId#91, channelIiD#113]
-   +- Window [first(channelIid#102, false) windowspecdefinition(campaignId#91, _w1#116L DESC NULLS LAST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS channelIiD#113], [campaignId#91], [_w1#116L DESC NULLS LAST]
-      +- Aggregate [campaignId#91, channelIiD#102], [campaignId#91, channelIid#102, count(distinct sessionId#74) AS _w1#116L]
-         +- Project [sessionId#74, campaignId#91, channelIid#102]
-            +- Window [last(attributes#44[campaign_id], true) windowspecdefinition(userId#16, eventTime#26 ASC NULLS FIRST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS campaignId#91, last(attributes#44[channel_id], true) windowspecdefinition(userId#16, eventTime#26 ASC NULLS FIRST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS channelIid#102], [userId#16], [eventTime#26 ASC NULLS FIRST]
-               +- Project [userId#16, eventTime#26, attributes#44, sessionId#74]
-                  +- Window [last(tmpSessionId#65, true) windowspecdefinition(userId#16, eventTime#26 ASC NULLS FIRST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS sessionId#74], [userId#16], [eventTime#26 ASC NULLS FIRST]
-                     +- Project [userId#16, cast(eventTime#19 as timestamp) AS eventTime#26, from_json(MapType(StringType,StringType,true), regexp_replace(regexp_extract(attributes#20, "?(\{.+\})"?, 1), "", ', 1), Some(Europe/Warsaw)) AS attributes#44, CASE WHEN (eventType#18 = app_open) THEN eventId#17 END AS tmpSessionId#65]
-                        +- Filter (cast(gettimestamp(cast(eventTime#19 as timestamp), yyyy-mm-dd, Some(Europe/Warsaw), false) as date) = 18577)
-                           +- Relation[userId#16,eventId#17,eventType#18,eventTime#19,attributes#20] csv
-
+Aggregate [campaignId#65, channelIiD#67], [campaignId#65, channelIiD#67]
++- Project [campaignId#65, channelIiD#67]
+   +- Window [first(channelIid#66, false) windowspecdefinition(campaignId#65, _w1#72L DESC NULLS LAST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS channelIiD#67], [campaignId#65], [_w1#72L DESC NULLS LAST]
+      +- Aggregate [campaignId#65, channelIid#66], [campaignId#65, channelIid#66, count(eventId#17) AS _w1#72L]
+         +- Project [eventId#17, from_json(MapType(StringType,StringType,true), regexp_replace(regexp_extract(attributes#20, "?(\{.+\})"?, 1), "", ', 1), Some(Europe/Warsaw))[campaign_id] AS campaignId#65, from_json(MapType(StringType,StringType,true), regexp_replace(regexp_extract(attributes#20, "?(\{.+\})"?, 1), "", ', 1), Some(Europe/Warsaw))[channel_id] AS channelIid#66]
+            +- Filter ((isnotnull(eventType#18) AND (cast(gettimestamp(cast(eventTime#19 as timestamp), yyyy-mm-dd, Some(Europe/Warsaw), false) as date) = 18577)) AND (eventType#18 = app_open))
+               +- Relation[userId#16,eventId#17,eventType#18,eventTime#19,attributes#20] csv
 == Physical Plan ==
-*(8) HashAggregate(keys=[campaignId#91, channelIiD#113], functions=[], output=[campaignId#91, channelIiD#113])
-+- *(8) HashAggregate(keys=[campaignId#91, channelIiD#113], functions=[], output=[campaignId#91, channelIiD#113])
-   +- *(8) Project [campaignId#91, channelIiD#113]
-      +- Window [first(channelIid#102, false) windowspecdefinition(campaignId#91, _w1#116L DESC NULLS LAST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS channelIiD#113], [campaignId#91], [_w1#116L DESC NULLS LAST]
-         +- *(7) Sort [campaignId#91 ASC NULLS FIRST, _w1#116L DESC NULLS LAST], false, 0
-            +- Exchange hashpartitioning(campaignId#91, 200), ENSURE_REQUIREMENTS, [id=#120]
-               +- *(6) HashAggregate(keys=[campaignId#91, channelIiD#102], functions=[count(distinct sessionId#74)], output=[campaignId#91, channelIiD#102, _w1#116L])
-                  +- Exchange hashpartitioning(campaignId#91, channelIiD#102, 200), ENSURE_REQUIREMENTS, [id=#116]
-                     +- *(5) HashAggregate(keys=[campaignId#91, channelIiD#102], functions=[partial_count(distinct sessionId#74)], output=[campaignId#91, channelIiD#102, count#121L])
-                        +- *(5) HashAggregate(keys=[campaignId#91, channelIiD#102, sessionId#74], functions=[], output=[campaignId#91, channelIiD#102, sessionId#74])
-                           +- Exchange hashpartitioning(campaignId#91, channelIiD#102, sessionId#74, 200), ENSURE_REQUIREMENTS, [id=#111]
-                              +- *(4) HashAggregate(keys=[campaignId#91, channelIiD#102, sessionId#74], functions=[], output=[campaignId#91, channelIiD#102, sessionId#74])
-                                 +- *(4) Project [sessionId#74, campaignId#91, channelIid#102]
-                                    +- Window [last(attributes#44[campaign_id], true) windowspecdefinition(userId#16, eventTime#26 ASC NULLS FIRST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS campaignId#91, last(attributes#44[channel_id], true) windowspecdefinition(userId#16, eventTime#26 ASC NULLS FIRST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS channelIid#102], [userId#16], [eventTime#26 ASC NULLS FIRST]
-                                       +- *(3) Project [userId#16, eventTime#26, attributes#44, sessionId#74]
-                                          +- Window [last(tmpSessionId#65, true) windowspecdefinition(userId#16, eventTime#26 ASC NULLS FIRST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS sessionId#74], [userId#16], [eventTime#26 ASC NULLS FIRST]
-                                             +- *(2) Sort [userId#16 ASC NULLS FIRST, eventTime#26 ASC NULLS FIRST], false, 0
-                                                +- Exchange hashpartitioning(userId#16, 200), ENSURE_REQUIREMENTS, [id=#98]
-                                                   +- Project [userId#16, cast(eventTime#19 as timestamp) AS eventTime#26, from_json(MapType(StringType,StringType,true), regexp_replace(regexp_extract(attributes#20, "?(\{.+\})"?, 1), "", ', 1), Some(Europe/Warsaw)) AS attributes#44, CASE WHEN (eventType#18 = app_open) THEN eventId#17 END AS tmpSessionId#65]
-                                                      +- *(1) Filter (cast(gettimestamp(cast(eventTime#19 as timestamp), yyyy-mm-dd, Some(Europe/Warsaw), false) as date) = 18577)
-                                                         +- FileScan csv [userId#16,eventId#17,eventType#18,eventTime#19,attributes#20] Batched: false, DataFilters: [(cast(gettimestamp(cast(eventTime#19 as timestamp), yyyy-mm-dd, Some(Europe/Warsaw), false) as d..., Format: CSV, Location: InMemoryFileIndex[file:/Users/bbaj/IdeaProjects/GridUMarketingAnalytics/src/main/resources/mobile..., PartitionFilters: [], PushedFilters: [], ReadSchema: struct<userId:string,eventId:string,eventType:string,eventTime:string,attributes:string>
+*(5) HashAggregate(keys=[campaignId#65, channelIiD#67], functions=[], output=[campaignId#65, channelIiD#67])
++- *(5) HashAggregate(keys=[campaignId#65, channelIiD#67], functions=[], output=[campaignId#65, channelIiD#67])
+   +- *(5) Project [campaignId#65, channelIiD#67]
+      +- Window [first(channelIid#66, false) windowspecdefinition(campaignId#65, _w1#72L DESC NULLS LAST, specifiedwindowframe(RangeFrame, unboundedpreceding$(), currentrow$())) AS channelIiD#67], [campaignId#65], [_w1#72L DESC NULLS LAST]
+         +- *(4) Sort [campaignId#65 ASC NULLS FIRST, _w1#72L DESC NULLS LAST], false, 0
+            +- Exchange hashpartitioning(campaignId#65, 200), ENSURE_REQUIREMENTS, [id=#71]
+               +- *(3) HashAggregate(keys=[campaignId#65, channelIid#66], functions=[count(eventId#17)], output=[campaignId#65, channelIid#66, _w1#72L])
+                  +- Exchange hashpartitioning(campaignId#65, channelIid#66, 200), ENSURE_REQUIREMENTS, [id=#67]
+                     +- *(2) HashAggregate(keys=[campaignId#65, channelIid#66], functions=[partial_count(eventId#17)], output=[campaignId#65, channelIid#66, count#76L])
+                        +- Project [eventId#17, from_json(MapType(StringType,StringType,true), regexp_replace(regexp_extract(attributes#20, "?(\{.+\})"?, 1), "", ', 1), Some(Europe/Warsaw))[campaign_id] AS campaignId#65, from_json(MapType(StringType,StringType,true), regexp_replace(regexp_extract(attributes#20, "?(\{.+\})"?, 1), "", ', 1), Some(Europe/Warsaw))[channel_id] AS channelIid#66]
+                           +- *(1) Filter ((isnotnull(eventType#18) AND (cast(gettimestamp(cast(eventTime#19 as timestamp), yyyy-mm-dd, Some(Europe/Warsaw), false) as date) = 18577)) AND (eventType#18 = app_open))
+                              +- FileScan csv [eventId#17,eventType#18,eventTime#19,attributes#20] Batched: false, DataFilters: [isnotnull(eventType#18), (cast(gettimestamp(cast(eventTime#19 as timestamp), yyyy-mm-dd, Some(Eu..., Format: CSV, Location: InMemoryFileIndex[file:/Users/bbaj/IdeaProjects/GridUMarketingAnalytics/src/main/resources/mobile..., PartitionFilters: [], PushedFilters: [IsNotNull(eventType), EqualTo(eventType,app_open)], ReadSchema: struct<eventId:string,eventType:string,eventTime:string,attributes:string>
 ```
