@@ -1,7 +1,7 @@
 package com.utils
 
 import org.apache.spark.sql.expressions.Window
-import org.apache.spark.sql.functions.{countDistinct, first, sum}
+import org.apache.spark.sql.functions.{count, first, sum}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 object CampaignsAndChannelsStatistics {
@@ -33,31 +33,39 @@ object CampaignsAndChannelsStatistics {
       .limit(n)
   }
 
-  def mostPopularChannelsInCampaigns(eventsWithSession: DataFrame)(implicit spark: SparkSession): DataFrame = {
-    eventsWithSession.createOrReplaceTempView("eventsWithSession")
+  def mostPopularChannelsInCampaigns(events: DataFrame)(implicit spark: SparkSession): DataFrame = {
+    events.createOrReplaceTempView("events")
 
     val query =
       """SELECT DISTINCT campaignId,
-        | FIRST(channelIid) OVER (PARTITION BY campaignId ORDER BY COUNT(DISTINCT sessionId) DESC) as channelIiD
-        |FROM eventsWithSession
-        |GROUP BY campaignId, channelIiD
+        | FIRST(channelIid) OVER (PARTITION BY campaignId ORDER BY COUNT(eventId) DESC) as channelIiD
+        |FROM (
+        | SELECT eventId, attributes.campaign_id AS campaignId, attributes.channel_id AS channelIid
+        | FROM events
+        | WHERE eventType = "app_open"
+        |)
+        |GROUP BY campaignId, channelIid
         |""".stripMargin
 
     spark.sql(query)
   }
 
-  def mostPopularChannelsInCampaignsWithoutSQL(eventsWithSession: DataFrame)
+  def mostPopularChannelsInCampaignsWithoutSQL(events: DataFrame)
                                               (implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
 
+    val appOpenEvents = events
+      .where($"eventType" === "app_open")
+      .select($"eventId", $"attributes.campaign_id" as "campaignId", $"attributes.channel_id" as "channelIid")
+
     val windowSpec = Window
       .partitionBy($"campaignId")
-      .orderBy(countDistinct($"sessionId").desc)
+      .orderBy(count($"eventId").desc)
 
-    eventsWithSession
+    appOpenEvents
       .groupBy("campaignId", "channelIid")
-      .agg(first($"channelIid").over(windowSpec) as "mostPopularChannelIid")
-      .where($"channelIid" === $"mostPopularChannelIid")
+      .agg(first("channelIid") over windowSpec as "mostPopularChannelIid")
+      .where($"mostPopularChannelIid" === $"channelIid")
       .select("campaignId", "channelIid")
   }
 
