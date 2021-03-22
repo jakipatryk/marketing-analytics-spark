@@ -82,11 +82,16 @@ object Driver extends App with DataLoader {
   def `task #3.2`(eventsDateCondition: Column, purchasesDateCondition: Column, pathName: String)(): Unit = {
     val (events, purchases) = loadInput
 
-    val filteredEvents = events.where(eventsDateCondition)
-    val filteredPurchases = purchases.where(purchasesDateCondition)
+    val filteredEvents = {
+      if(events.schema.fieldNames contains "eventTimeDate") events
+      else events.withColumn("eventTimeDate", to_date($"eventTime", "yyyy-mm-dd"))
+    }.where(eventsDateCondition)
+    val filteredPurchases = {
+      if(purchases.schema.fieldNames contains "purchaseTimeDate") purchases
+      else purchases.withColumn("purchaseTimeDate", to_date($"purchaseTime", "yyyy-mm-dd"))
+    }.where(purchasesDateCondition)
 
-    val purchasesAttribution = PurchasesAttributionProjection
-      .viaPlainSparkSQL(filteredEvents, filteredPurchases)
+    val purchasesAttribution = PurchasesAttributionProjection.viaPlainSparkSQL(filteredEvents, filteredPurchases)
     val topCampaigns = CampaignsAndChannelsStatistics.topCampaignsByRevenue(purchasesAttribution)
     topCampaigns
       .write
